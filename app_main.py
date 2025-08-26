@@ -9,15 +9,20 @@ import time
 class Login:
 
     def __init__(self):
-        self.url = "https://ead.cecp.sp.gov.br/login/index.php"
+        self.url = "http://ead.cecp.sp.gov.br/login/index.php"
         self.driver = None
         
     def setup_driver(self):
-        options = Options()
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-dev-shm-usage")
-        self.driver = webdriver.Chrome(options=options)
-        self.wait = WebDriverWait(self.driver, 10)
+        try:
+            options = Options()
+            options.add_argument("--no-sandbox")
+            options.add_argument("--disable-dev-shm-usage")
+            self.driver = webdriver.Chrome(options=options)
+            self.wait = WebDriverWait(self.driver, 10)
+            print("Driver configurado com sucesso")
+        except Exception as e:
+            print(f"Erro ao configurar driver: {e}")
+            raise
 
     def ping(self):
         while True:
@@ -28,11 +33,20 @@ class Login:
                     return print(f'Site ON as {self.now}')
             except:
                 print(f'Site OFF as {self.now}')
-            time.sleep(5)
+            time.sleep(10)
         
     def navigate(self):
-        self.driver.get(self.url)
-        self.wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+        if not self.driver:
+            raise Exception("Driver não foi inicializado. Chame setup_driver() primeiro.")
+        
+        try:
+            self.driver.get(self.url)
+            self.wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            print("Navegação realizada com sucesso")
+        except Exception as e:
+            print(f"Erro na navegação: {e}")
+            raise
+        
         
     def find_login_elements(self):
         username = self.driver.find_element(By.XPATH, "//*[@id='username']")
@@ -44,11 +58,20 @@ class Login:
     def login(self, user, pwd):
         username, password, login_btn = self.find_login_elements()
         
-        username.send_keys('370.768.438-54')
-        password.send_keys('@Leon02023091')
+        username.send_keys(user)
+        password.send_keys(pwd)
         login_btn.click()
-        
         time.sleep(5)
+        
+    def get_cursos(self):
+        self.driver.find_element(By.XPATH, "/html/body/div[3]/nav/div[1]/nav/ul/li[3]/a").click()
+        time.sleep(5)
+        self.driver.find_element(By.XPATH, "/html/body/div[3]/div[3]/div[1]/div[2]/div/section/div/section/section/div/div/div[1]/div[2]/div/div/div[1]/div/div/div[1]/div/a").click()
+        #self.driver.find_element(By.XPATH, "/html/body/div[3]/nav/div[1]/nav/ul/li[3]/ul/li[1]/a").click()
+        
+    def processar_cursos(self):
+        self.driver.find_element(By.XPATH, "/html/body/div[3]/div[5]/div[1]/div[3]/div/section/div/div[1]/div/ul")
+
         
     #def close(self):
     #    if self.driver:
@@ -58,19 +81,24 @@ def main():
     login = Login()
     
     try:
-        login.ping()
+        print("Configurando driver...")
         login.setup_driver()
+        
+        print("Navegando para o site...")
         login.navigate()
         
-        # Exemplo de uso:
-        # scraper.login("seu_usuario", "sua_senha")
+        print("Fazendo login...")
+        login.login('370.768.438-54','@Leon02023091')
         
-        print(f"Página carregada: {login.driver.title}")
-        
+        print("Acessando cursos...")
+        login.get_cursos()
+        time.sleep(30)
+
     except Exception as e:
         print(f"Erro: {e}")
     finally:
-        pass
+        if login.driver:
+            login.driver.quit()
         #scraper.close()
 
 if __name__ == "__main__":
