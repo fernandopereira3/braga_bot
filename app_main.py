@@ -7,99 +7,159 @@ from selenium.webdriver.chrome.options import Options
 import time
 
 
-class Login:
+class BragaBot:
+    # Constantes
+    URL = "http://ead.cecp.sp.gov.br/login/index.php"
+    USERNAME = "370.768.438-54"
+    PASSWORD = "@Leon02023091"
+    TIMEOUT = 10
+
+    # Seletores otimizados
+    SELECTORS = {
+        "username": "#username",
+        "password": "#password",
+        "login_btn": "#loginbtn",
+        "menu_cursos": "//nav//li[3]/a",
+        "primeiro_curso": "//section//div[1]//a",
+        "modulos_list": "//section//ul/li",
+        "modulos_concluidos": "//ul/li/div[2]/i",
+        "modulo_12": "//ul/li[12]",
+        "play_button": "//li[12]//a[contains(@class, 'play') or contains(text(), 'Play')]",
+    }
+
     def __init__(self):
-        self.url = "http://ead.cecp.sp.gov.br/login/index.php"
         self.driver = None
+        self.wait = None
 
     def setup_driver(self):
-        try:
-            options = Options()
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            self.driver = webdriver.Chrome(options=options)
-            self.wait = WebDriverWait(self.driver, 10)
-            print("Driver configurado com sucesso")
-        except Exception as e:
-            print(f"Erro ao configurar driver: {e}")
-            raise
+        """Configura o driver do Chrome com opções otimizadas"""
+        options = Options()
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
 
-    def ping(self):
-        while True:
-            self.now = time.strftime("%H:%M:%S")
-            try:
-                ping = requests.get(self.url)
-                if ping.status_code == 200:
-                    return print(f"Site ON as {self.now}")
-            except:
-                print(f"Site OFF as {self.now}")
+        self.driver = webdriver.Chrome(options=options)
+        self.wait = WebDriverWait(self.driver, self.TIMEOUT)
+        print("✅ Driver configurado")
+
+    def check_connectivity(self):
+        """Verifica se o site está acessível"""
+        try:
+            response = requests.get(self.URL, timeout=5)
+            return response.status_code == 200
+        except requests.RequestException:
+            return False
+
+    def wait_for_site(self):
+        """Aguarda o site ficar acessível"""
+        while not self.check_connectivity():
+            print("⏳ Site não acessível. Aguardando 10s...")
             time.sleep(10)
+        print("✅ Site acessível")
 
-    def navigate(self):
-        if not self.driver:
-            raise Exception(
-                "Driver não foi inicializado. Chame setup_driver() primeiro."
-            )
+    def navigate_and_login(self):
+        """Navega para o site e faz login"""
+        self.driver.get(self.URL)
+        self.wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
-        try:
-            self.driver.get(self.url)
-            self.wait.until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-            print("Navegação realizada com sucesso")
-        except Exception as e:
-            print(f"Erro na navegação: {e}")
-            raise
-
-    def find_login_elements(self):
-        username = self.driver.find_element(By.XPATH, "//*[@id='username']")
-        password = self.driver.find_element(By.XPATH, '//*[@id="password"]')
-        login_btn = self.driver.find_element(By.XPATH, '//*[@id="loginbtn"]')
-
-        return username, password, login_btn
-
-    def login(self, user, pwd):
-        username, password, login_btn = self.find_login_elements()
-
-        username.send_keys(user)
-        password.send_keys(pwd)
-        login_btn.click()
-        time.sleep(5)
-
-    def get_cursos(self):
-        self.driver.find_element(
-            By.XPATH, "/html/body/div[3]/nav/div[1]/nav/ul/li[3]/a"
-        ).click()
-        time.sleep(5)
-        self.driver.find_element(
-            By.XPATH,
-            "/html/body/div[3]/div[3]/div[1]/div[2]/div/section/div/section/section/div/div/div[1]/div[2]/div/div/div[1]/div/div/div[1]/div/a",
-        ).click()
-        # self.driver.find_element(By.XPATH, "/html/body/div[3]/nav/div[1]/nav/ul/li[3]/ul/li[1]/a").click()
-
-    def processar_cursos(self):
-        self.driver.find_element(
-            By.XPATH,
-            "/html/body/div[3]/div[5]/div[1]/div[3]/div/section/div/div[1]/div/ul",
+        # Login
+        self.wait.until(
+            EC.element_to_be_clickable((By.CSS_SELECTOR, self.SELECTORS["username"]))
+        ).send_keys(self.USERNAME)
+        self.driver.find_element(By.CSS_SELECTOR, self.SELECTORS["password"]).send_keys(
+            self.PASSWORD
         )
+        self.driver.find_element(By.CSS_SELECTOR, self.SELECTORS["login_btn"]).click()
 
-    # def close(self):
-    #    if self.driver:
-    #        self.driver.quit()
+        self.wait.until(EC.url_changes(self.URL))
+        print("✅ Login realizado")
+
+    def access_course(self):
+        """Acessa o curso e retorna informações dos módulos"""
+        # Navegar para cursos
+        self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, self.SELECTORS["menu_cursos"]))
+        ).click()
+        time.sleep(2)
+
+        # Selecionar primeiro curso
+        self.wait.until(
+            EC.element_to_be_clickable((By.XPATH, self.SELECTORS["primeiro_curso"]))
+        ).click()
+        time.sleep(2)
+
+        # Contar módulos
+        modulos = self.wait.until(
+            EC.presence_of_all_elements_located(
+                (By.XPATH, self.SELECTORS["modulos_list"])
+            )
+        )
+        total_modulos = len(modulos)
+
+        # Contar módulos concluídos
+        try:
+            concluidos = self.driver.find_elements(
+                By.XPATH, self.SELECTORS["modulos_concluidos"]
+            )
+            total_concluidos = len(concluidos)
+        except:
+            total_concluidos = 0
+
+        print(f"📊 Módulos: {total_concluidos}/{total_modulos} concluídos")
+
+        # Acessar módulo 12
+        try:
+            modulo_12 = self.driver.find_element(By.XPATH, self.SELECTORS["modulo_12"])
+            modulo_12.click()
+            time.sleep(1)
+
+            # Clicar no play
+            play_btn = self.wait.until(
+                EC.element_to_be_clickable((By.XPATH, self.SELECTORS["play_button"]))
+            )
+            play_btn.click()
+            print("▶️ Módulo 12 iniciado")
+
+        except Exception as e:
+            print(f"⚠️ Erro ao acessar módulo 12: {e}")
+
+        return total_modulos, total_concluidos
+
+    def run(self):
+        """Executa o fluxo completo do bot"""
+        try:
+            print("🤖 Iniciando Braga Bot...")
+
+            # Verificar conectividade
+            self.wait_for_site()
+
+            # Configurar driver
+            self.setup_driver()
+
+            # Login e navegação
+            self.navigate_and_login()
+
+            # Acessar curso
+            total, concluidos = self.access_course()
+
+            print(f"✅ Processo concluído! {concluidos}/{total} módulos")
+
+        except Exception as e:
+            print(f"❌ Erro: {e}")
+        finally:
+            self.cleanup()
+
+    def cleanup(self):
+        """Limpa recursos"""
+        if self.driver:
+            self.driver.quit()
+            print("🧹 Driver fechado")
 
 
 def main():
-    login = Login()
-    if login.ping() == 200:
-        print("Configurando driver...")
-        login.setup_driver()
-        print("Navegando para o site...")
-        login.navigate()
-        print("Fazendo login...")
-        login.login("370.768.438-54", "@Leon02023091")
-        print("Acessando cursos...")
-        login.get_cursos()
-        time.sleep(30)
-    else:
-        login.ping()
+    bot = BragaBot()
+    bot.run()
 
 
 if __name__ == "__main__":
