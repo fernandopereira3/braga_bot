@@ -10,8 +10,8 @@ import time
 class BragaBot:
     # Constantes
     URL = "http://ead.cecp.sp.gov.br/login/index.php"
-    USERNAME = "370.768.438-54"
-    PASSWORD = "@Leon02023091"
+    USERNAME = ""
+    PASSWORD = ""
     TIMEOUT = 10
 
     # Seletores otimizados
