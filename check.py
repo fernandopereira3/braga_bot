@@ -1,7 +1,7 @@
 import requests
 import time
 import subprocess
-import sys
+import platform
 
 
 class ConnectivityChecker:
@@ -22,49 +22,71 @@ class ConnectivityChecker:
             print("⏳ Site não acessível. Aguardando 10s...")
             time.sleep(10)
         print("✅ Site acessível")
+        self._send_notification(
+            "Site Online", "O site está acessível e pronto para uso!"
+        )
 
-    def wait_and_execute(self, script_path="app_main.py"):
-        """Aguarda o site ficar online e executa o script principal"""
+    def monitor_site(self):
+        """Monitora o site e envia notificações quando ficar online"""
         print("🔍 Verificando conectividade...")
 
         if self.check_connectivity():
-            print("✅ Site já está online! Executando app_main...")
-            self._execute_script(script_path)
+            print("✅ Site já está online!")
+            self._send_notification("Site Status", "Site está online e acessível!")
         else:
-            print("⏳ Site offline. Aguardando ficar online...")
+            print("⏳ Site offline. Monitorando...")
             self.wait_for_site()
-            print("🚀 Executando app_main...")
-            self._execute_script(script_path)
 
-    def _execute_script(self, script_path):
-        """Executa o script Python especificado"""
+    def _send_notification(self, title, message):
+        """Envia notificação push do sistema operacional"""
         try:
-            result = subprocess.run(
-                [sys.executable, script_path],
-                capture_output=True,
-                text=True,
-                check=True,
-            )
-            print("✅ Script executado com sucesso!")
-            if result.stdout:
-                print("Output:", result.stdout)
-        except subprocess.CalledProcessError as e:
-            print(f"❌ Erro ao executar o script: {e}")
-            if e.stderr:
-                print("Erro:", e.stderr)
-        except FileNotFoundError:
-            print(f"❌ Arquivo {script_path} não encontrado!")
+            system = platform.system().lower()
+
+            if system == "darwin":  # macOS
+                subprocess.run(
+                    [
+                        "osascript",
+                        "-e",
+                        f'display notification "{message}" with title "{title}"',
+                    ],
+                    check=True,
+                )
+
+            elif system == "linux":
+                # Verifica se notify-send está disponível
+                subprocess.run(["notify-send", title, message], check=True)
+
+            elif system == "windows":
+                # Usa PowerShell para Windows 10/11
+                ps_script = f'''
+                Add-Type -AssemblyName System.Windows.Forms
+                $notification = New-Object System.Windows.Forms.NotifyIcon
+                $notification.Icon = [System.Drawing.SystemIcons]::Information
+                $notification.BalloonTipTitle = "{title}"
+                $notification.BalloonTipText = "{message}"
+                $notification.Visible = $true
+                $notification.ShowBalloonTip(5000)
+                Start-Sleep -Seconds 6
+                $notification.Dispose()
+                '''
+                subprocess.run(["powershell", "-Command", ps_script], check=True)
+
+            else:
+                print(f"⚠️ Notificações não suportadas para {system}")
+
+        except subprocess.CalledProcessError:
+            print("⚠️ Falha ao enviar notificação push")
+        except Exception as e:
+            print(f"⚠️ Erro na notificação: {e}")
 
 
 # Função para uso direto
-def monitor_and_execute(
-    url="http://ead.cecp.sp.gov.br/login/index.php", script="app_main.py"
-):
-    """Monitora o site e executa o script quando estiver online"""
+def monitor_connectivity(url="http://ead.cecp.sp.gov.br/login/index.php"):
+    """Monitora o site e envia notificações quando estiver online"""
     checker = ConnectivityChecker(url)
-    checker.wait_and_execute(script)
+    checker.monitor_site()
 
 
 if __name__ == "__main__":
     # Executa o monitoramento se o arquivo for chamado diretamente
-    monitor_and_execute()
+    monitor_connectivity()
