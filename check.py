@@ -22,9 +22,7 @@ class ConnectivityChecker:
             print("⏳ Site não acessível. Aguardando 10s...")
             time.sleep(10)
         print("✅ Site acessível")
-        self._send_notification(
-            "Site Online", "O site está acessível e pronto para uso!"
-        )
+        self._send_notification("AVISO!", "Cecp está online e acessível! CORRE!")
 
     def monitor_site(self):
         """Monitora o site e envia notificações quando ficar online"""
@@ -32,7 +30,7 @@ class ConnectivityChecker:
 
         if self.check_connectivity():
             print("✅ Site já está online!")
-            self._send_notification("Site Status", "Site está online e acessível!")
+            self._send_notification("AVISO!", "Cecp está online e acessível! CORRE")
         else:
             print("⏳ Site offline. Monitorando...")
             self.wait_for_site()
