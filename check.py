@@ -27,16 +27,32 @@ class ConnectivityChecker:
             elif system == "linux":
                 subprocess.run(["notify-send", message], check=True)
             elif system == "windows":
-                subprocess.run(
-                    [
-                        "powershell",
-                        "-Command",
-                        f'[System.Windows.Forms.MessageBox]::Show("{message}")',
-                    ],
-                    check=True,
-                )
+                ps_script = f'''
+                Add-Type -AssemblyName System.Windows.Forms
+                $notification = New-Object System.Windows.Forms.NotifyIcon
+                $notification.Icon = [System.Drawing.SystemIcons]::Information
+                $notification.BalloonTipTitle = "Site Monitor"
+                $notification.BalloonTipText = "{message}"
+                $notification.Visible = $true
+                $notification.ShowBalloonTip(5000)
+                Start-Sleep -Seconds 6
+                $notification.Dispose()
+                '''
+                subprocess.run(["powershell", "-Command", ps_script], check=True)
         except:
             pass
+
+    def ask_user_continue(self):
+        """Pergunta ao usuário se deseja continuar"""
+        try:
+            response = (
+                input("\n🌐 Site está online! Deseja continuar monitorando? (s/n): ")
+                .lower()
+                .strip()
+            )
+            return response in ["s", "sim", "y", "yes", ""]
+        except KeyboardInterrupt:
+            return False
 
     def monitor(self, interval=10):
         """Monitora conectividade"""
@@ -44,6 +60,10 @@ class ConnectivityChecker:
             while True:
                 if self.is_online():
                     self.notify("Site está online!")
+
+                    # Pergunta se o usuário quer continuar
+                    if not self.ask_user_continue():
+                        break
 
                 time.sleep(interval)
         except KeyboardInterrupt:
