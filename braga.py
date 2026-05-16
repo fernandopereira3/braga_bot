@@ -211,7 +211,7 @@ class BragaBot:
         #     fullname=fullname,
         # )
         # for course_id, url in incompletos:
-        #     runner.run_course(course_id, url)
+        #     runner.run_course(course_id, url).  ideia seria criar um runner para cada curso e rodar em paralelo, mas isso pode não ser legal. Por ora, só listar os cursos incompletos.
 
     def run(self):
         try:
