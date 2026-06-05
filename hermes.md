@@ -1,0 +1,11 @@
+Atualizado em: quarta 03 jun 2026 09:00:39 -03
+Atualizado em: quarta 03 jun 2026 09:10:48 -03
+Atualizado em: quarta 03 jun 2026 09:20:58 -03
+Atualizado em: quarta 03 jun 2026 09:30:08 -03
+Atualizado em: quarta 03 jun 2026 09:40:17 -03
+Atualizado em: quarta 03 jun 2026 09:50:27 -03
+Atualizado em: quarta 03 jun 2026 10:00:36 -03
+Atualizado em: quarta 03 jun 2026 10:10:44 -03
+Atualizado em: quinta 04 jun 2026 21:07:19 -03
+Atualizado em: quinta 04 jun 2026 21:07:22 -03
+Atualizado em: quinta 04 jun 2026 21:07:28 -03
