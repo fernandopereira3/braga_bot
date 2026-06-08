@@ -67,3 +67,4 @@ Atualizado em: sexta 05 jun 2026 06:00:10 -03
 Atualizado em: sexta 05 jun 2026 06:10:51 -03
 Atualizado em: sexta 05 jun 2026 06:20:55 -03
 Atualizado em: segunda 08 jun 2026 13:32:59 -03
+Atualizado em: segunda 08 jun 2026 13:40:09 -03
