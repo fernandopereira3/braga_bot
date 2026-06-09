@@ -100,3 +100,4 @@ Atualizado em: segunda 08 jun 2026 23:20:57 -03
 Atualizado em: segunda 08 jun 2026 23:40:59 -03
 Atualizado em: terça 09 jun 2026 00:00:00 -03
 Atualizado em: terça 09 jun 2026 00:20:02 -03
+Atualizado em: terça 09 jun 2026 00:40:03 -03
