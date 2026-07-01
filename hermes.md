@@ -1,1 +1,1 @@
-Atualizado em: terça 30 jun 2026 23:50:07 -03
+Atualizado em: quarta 01 jul 2026 00:00:07 -03
