@@ -2,6 +2,7 @@ import re
 import requests
 import subprocess
 import os
+import sys
 import traceback
 from dotenv import load_dotenv
 from selenium import webdriver
@@ -14,6 +15,12 @@ import time
 # from app_course import CourseRunner
 
 load_dotenv()
+
+
+def clear_screen():
+    if sys.stdout.isatty():
+        subprocess.run("cls" if os.name == "nt" else "clear")
+
 
 USERS_FILE = os.path.join(os.path.dirname(__file__), "users.md")
 PAGE_DELAY = float(os.environ.get("PAGE_DELAY", "5"))
@@ -205,7 +212,7 @@ class BragaBot:
                 print(f"❌ [{course_id}] Falha ao inscrever: {e}")
 
     def run_for_user(self, username, password):
-        subprocess.run("cls" if os.name == "nt" else "clear")
+        clear_screen()
         print(f"\n{'=' * 50}")
         print(f"👤 Processando: {username}")
         print(f"{'=' * 50}")
@@ -236,7 +243,7 @@ class BragaBot:
 
     def run(self):
         try:
-            subprocess.run("cls" if os.name == "nt" else "clear")
+            clear_screen()
             print("🤖 Iniciando Braga")
             users = load_users()
             if not users:
