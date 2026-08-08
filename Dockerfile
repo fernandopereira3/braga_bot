@@ -1,21 +1,26 @@
-FROM fedora:latest
+FROM python:3.14-slim
 
-# Set working directory
+ENV PYTHONUNBUFFERED=1
+
 WORKDIR /app
 
-# Copy application files
+# Instalar dependências do sistema e Google Chrome Stable
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wget \
+    gnupg \
+    ca-certificates \
+    && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/google-archive-keyring.gpg \
+    && echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-archive-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar dependências do Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copiar os arquivos do projeto
 COPY . .
-RUN dnf update  -y
-RUN dnf install python313 -y
-RUN dnf install python3-pip -y
-RUN dnf install fedora-workstation-repositories -y
-RUN dnf config-manager setopt google-chrome.enabled=1 -y
-RUN dnf install google-chrome-stable -y
-RUN cd /app 
-RUN python3 -m venv .
-RUN python3 -m pip install -r requirements.txt
 
-# Run the application
-CMD ["python3", "app.py"]
-
-VOLUME /app/cert
+# Executar a aplicação
+CMD ["python", "braga.py"]
