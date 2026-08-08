@@ -2,13 +2,14 @@ import re
 import requests
 import subprocess
 import os
+import traceback
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import time
 # from app_course import CourseRunner
 
@@ -80,11 +81,26 @@ class BragaBot:
             username,
             password,
         )
+        time.sleep(5)  # Pequena pausa para evitar problemas de sincronização
         self.driver.find_element(By.CSS_SELECTOR, "#loginbtn").click()
-        self.wait.until(EC.url_changes(self.LOGIN_URL))
+        try:
+            self.wait.until(EC.url_changes(self.LOGIN_URL))
+        except TimeoutException:
+            raise RuntimeError(
+                f"Login falhou para {username}: a página não saiu de {self.LOGIN_URL} "
+                f"após o clique em #loginbtn (timeout de {self.TIMEOUT}s)"
+            )
 
         if "login" in self.driver.current_url:
-            raise RuntimeError(f"Login falhou para {username}")
+            erro_site = ""
+            try:
+                erro_site = self.driver.find_element(
+                    By.CSS_SELECTOR, "#loginerrormessage, .loginerrors"
+                ).text.strip()
+            except NoSuchElementException:
+                pass
+            detalhe = f" | Mensagem do site: {erro_site}" if erro_site else ""
+            raise RuntimeError(f"Login falhou para {username}{detalhe}")
         print("✅ Login realizado")
 
     def _get_user_fullname(self):
@@ -170,7 +186,7 @@ class BragaBot:
             self.wait.until(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
-            time.sleep(2) 
+            time.sleep(2)
             try:
                 submit_btn = self.driver.find_element(
                     By.CSS_SELECTOR, "#id_submitbutton"
@@ -201,7 +217,9 @@ class BragaBot:
             print("  Nenhum curso para completar.")
             time.sleep(10)
             return
-        print(f"\n📋 {len(incompletos)} curso(s) para completar:") # enviar via Twilio no futuro
+        print(
+            f"\n📋 {len(incompletos)} curso(s) para completar:"
+        )  # enviar via Twilio no futuro
         for course_id, url in incompletos:
             print(f"  • [{course_id}] {url}")
 
@@ -232,14 +250,30 @@ class BragaBot:
                     self.run_for_user(username, password)
                 except Exception as e:
                     print(f"❌ Erro no usuário {username}: {e}")
+                    traceback.print_exc()
             print("\n✅ Todos os usuários processados!")
         except Exception as e:
             print(f"❌ Erro geral: {e}")
+            traceback.print_exc()
         finally:
             if self.driver:
                 self.driver.quit()
                 print("🧹 Driver fechado")
 
 
+RUN_INTERVAL_DAYS = float(os.environ.get("RUN_INTERVAL_DAYS", "7"))
+
+
+def run_scheduled():
+    interval_seconds = RUN_INTERVAL_DAYS * 24 * 60 * 60
+    while True:
+        BragaBot().run()
+        print(
+            f"⏰ Próxima execução em {RUN_INTERVAL_DAYS} dia(s) "
+            f"({time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + interval_seconds))})"
+        )
+        time.sleep(interval_seconds)
+
+
 if __name__ == "__main__":
-    BragaBot().run()
+    run_scheduled()
