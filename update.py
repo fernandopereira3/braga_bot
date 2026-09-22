@@ -111,7 +111,7 @@ def main():
 
         # Montagem da mensagem final
         if detalhes_lista:
-            mensagem_final = " ; ".join(detalhes_lista) + f" / {date_str}"
+            mensagem_final = " ; ".join(detalhes_lista) + f" | {date_str}"
         else:
             mensagem_final = date_str
 

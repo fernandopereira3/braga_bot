@@ -10,7 +10,11 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    StaleElementReferenceException,
+    TimeoutException,
+)
 import time
 # from app_course import CourseRunner
 
@@ -73,22 +77,42 @@ class BragaBot:
             time.sleep(10)
         print("✅ Site acessível")
 
+    def _fill_field(self, selector, text):
+        # O Moodle re-renderiza #password de forma assíncrona (módulo JS
+        # core/togglesensitive, botão de mostrar/ocultar senha), então o
+        # elemento pode ficar stale ou perder o valor digitado logo após o
+        # preenchimento. Preenche com verificação e tenta de novo se preciso.
+        for _ in range(10):
+            field = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
+            try:
+                field.clear()
+                field.send_keys(text)
+            except StaleElementReferenceException:
+                continue
+            time.sleep(0.5)
+            try:
+                current = self.driver.execute_script(
+                    "return document.querySelector(arguments[0]).value", selector
+                )
+            except Exception:
+                continue
+            if current == text:
+                return
+        raise RuntimeError(f"Não foi possível preencher o campo {selector} de forma estável")
+
     def login(self, username, password):
         self.driver.delete_all_cookies()
         self.driver.get(self.LOGIN_URL)
         self.wait.until(
             lambda d: d.execute_script("return document.readyState") == "complete"
         )
-        self.wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "#username")))
+        self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#username")))
+        self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "#password")))
+        time.sleep(1)  # dá tempo dos módulos AMD (ex: togglesensitive) terminarem
 
         print(f"🔐 Login: {username} | Senha: {'*' * len(password)}")
-        self.driver.execute_script(
-            "document.querySelector('#username').value = arguments[0];"
-            "document.querySelector('#password').value = arguments[1];",
-            username,
-            password,
-        )
-        time.sleep(5)  # Pequena pausa para evitar problemas de sincronização
+        self._fill_field("#username", username)
+        self._fill_field("#password", password)
         self.driver.find_element(By.CSS_SELECTOR, "#loginbtn").click()
         try:
             self.wait.until(EC.url_changes(self.LOGIN_URL))
