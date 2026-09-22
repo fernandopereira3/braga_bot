@@ -26,7 +26,7 @@ def clear_screen():
         subprocess.run("cls" if os.name == "nt" else "clear")
 
 
-USERS_FILE = os.path.join(os.path.dirname(__file__), "users.md")
+USERS_FILE = os.path.join(os.path.dirname(__file__), "users", "users.md")
 PAGE_DELAY = float(os.environ.get("PAGE_DELAY", "5"))
 ENROL_ID_MAX = int(os.environ.get("ENROL_ID_MAX", "100"))
 
