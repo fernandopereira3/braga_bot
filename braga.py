@@ -4,6 +4,7 @@ import subprocess
 import os
 import sys
 import traceback
+from datetime import datetime
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -27,6 +28,7 @@ def clear_screen():
 
 
 USERS_FILE = os.path.join(os.path.dirname(__file__), "users", "users.md")
+LOG_FILE = os.path.join(os.path.dirname(__file__), "users", "incompletos.log")
 PAGE_DELAY = float(os.environ.get("PAGE_DELAY", "5"))
 ENROL_ID_MAX = int(os.environ.get("ENROL_ID_MAX", "100"))
 
@@ -61,6 +63,9 @@ class BragaBot:
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
         options.add_argument("--disable-gpu")
+        chrome_bin = os.environ.get("CHROME_BIN")
+        if chrome_bin:
+            options.binary_location = chrome_bin
         self.driver = webdriver.Chrome(options=options)
         self.wait = WebDriverWait(self.driver, self.TIMEOUT)
         print("✅ Driver configurado")
@@ -201,7 +206,7 @@ class BragaBot:
             else:
                 print(f"  📝 [{course_id}] {nome} — sem progresso registrado")
 
-            incompletos.append((course_id, url))
+            incompletos.append((course_id, nome, url))
 
         print(f"  {len(incompletos)} curso(s) para completar")
         return incompletos
@@ -251,8 +256,15 @@ class BragaBot:
         print(
             f"\n📋 {len(incompletos)} curso(s) para completar:"
         )  # enviar via Twilio no futuro
-        for course_id, url in incompletos:
-            print(f"  • [{course_id}] {url}")
+        for course_id, nome, url in incompletos:
+            print(f"  • [{course_id}]  {nome}: {url}")
+
+        with open(LOG_FILE, "a", encoding="utf-8") as log:
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            log.write(f"[{timestamp}] {username}\n")
+            log.write(f"\n📋 {len(incompletos)} curso(s) para completar:\n")
+            for course_id, nome, url in incompletos:
+                log.write(f"  • [{course_id}]  {nome}: {url}\n")
 
         # runner = CourseRunner(
         #     self.driver,
@@ -292,7 +304,7 @@ class BragaBot:
                 print("🧹 Driver fechado")
 
 
-RUN_INTERVAL_DAYS = float(os.environ.get("RUN_INTERVAL_DAYS", "7"))
+RUN_INTERVAL_DAYS = float(os.environ.get("RUN_INTERVAL_DAYS", "1"))
 
 
 def run_scheduled():

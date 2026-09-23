@@ -1,0 +1,9 @@
+services:
+  bragabot:
+    image: fernandopereira3/bragabot:latest
+    platform: linux/arm64
+    env_file:
+      - .env
+    volumes:
+      - ./users:/app/users
+    restart: unless-stopped
