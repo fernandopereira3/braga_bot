@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.common.exceptions import (
     NoSuchElementException,
     StaleElementReferenceException,
@@ -66,7 +67,10 @@ class BragaBot:
         chrome_bin = os.environ.get("CHROME_BIN")
         if chrome_bin:
             options.binary_location = chrome_bin
-        self.driver = webdriver.Chrome(options=options)
+        # Selenium Manager não suporta linux/aarch64: usar o chromedriver do sistema
+        chromedriver = os.environ.get("CHROMEDRIVER_PATH")
+        service = Service(executable_path=chromedriver) if chromedriver else Service()
+        self.driver = webdriver.Chrome(options=options, service=service)
         self.wait = WebDriverWait(self.driver, self.TIMEOUT)
         print("✅ Driver configurado")
 
