@@ -265,6 +265,7 @@ class BragaBot:
 
         with open(LOG_FILE, "a", encoding="utf-8") as log:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            log.write(f"\n{'=' * 50}\n") 
             log.write(f"[{timestamp}] {username}\n")
             log.write(f"\n📋 {len(incompletos)} curso(s) para completar:\n")
             for course_id, nome, url in incompletos:
