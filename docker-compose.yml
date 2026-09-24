@@ -4,6 +4,16 @@ services:
     platform: linux/arm64
     env_file:
       - .env
+    environment:
+      - TZ=America/Sao_Paulo
     volumes:
-      - ./users:/app/users
+      - bragabot:/app/users
     restart: unless-stopped
+
+volumes:
+  bragabot:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /srv/samba/programas/Volumes/braga_bot

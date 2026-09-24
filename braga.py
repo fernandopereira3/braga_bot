@@ -339,4 +339,5 @@ def run_scheduled():
 
 
 if __name__ == "__main__":
+    BragaBot().run()
     run_scheduled()
