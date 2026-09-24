@@ -4,7 +4,7 @@ import subprocess
 import os
 import sys
 import traceback
-from datetime import datetime
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -92,7 +92,9 @@ class BragaBot:
         # elemento pode ficar stale ou perder o valor digitado logo após o
         # preenchimento. Preenche com verificação e tenta de novo se preciso.
         for _ in range(10):
-            field = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, selector)))
+            field = self.wait.until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, selector))
+            )
             try:
                 field.clear()
                 field.send_keys(text)
@@ -107,7 +109,9 @@ class BragaBot:
                 continue
             if current == text:
                 return
-        raise RuntimeError(f"Não foi possível preencher o campo {selector} de forma estável")
+        raise RuntimeError(
+            f"Não foi possível preencher o campo {selector} de forma estável"
+        )
 
     def login(self, username, password):
         self.driver.delete_all_cookies()
@@ -265,11 +269,12 @@ class BragaBot:
 
         with open(LOG_FILE, "a", encoding="utf-8") as log:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            log.write(f"\n{'=' * 50}\n") 
+            log.write(f"\n{'=' * 50}\n")
             log.write(f"[{timestamp}] {username}\n")
             log.write(f"\n📋 {len(incompletos)} curso(s) para completar:\n")
             for course_id, nome, url in incompletos:
                 log.write(f"  • [{course_id}]  {nome}: {url}\n")
+                log.write("\n")
 
         # runner = CourseRunner(
         #     self.driver,
@@ -309,18 +314,28 @@ class BragaBot:
                 print("🧹 Driver fechado")
 
 
-RUN_INTERVAL_DAYS = float(os.environ.get("RUN_INTERVAL_DAYS", "1"))
+# Horários de execução diária
+RUN_TIMES = ["08:00"]
+
+
+def _next_run_time(times):
+    now = datetime.now()
+    candidates = []
+    for t in times:
+        hour, minute = map(int, t.split(":"))
+        candidate = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if candidate <= now:
+            candidate += timedelta(days=1)
+        candidates.append(candidate)
+    return min(candidates)
 
 
 def run_scheduled():
-    interval_seconds = RUN_INTERVAL_DAYS * 24 * 60 * 60
     while True:
+        next_run = _next_run_time(RUN_TIMES)
+        print(f"⏰ Próxima execução em {next_run.strftime('%Y-%m-%d %H:%M:%S')}")
+        time.sleep((next_run - datetime.now()).total_seconds())
         BragaBot().run()
-        print(
-            f"⏰ Próxima execução em {RUN_INTERVAL_DAYS} dia(s) "
-            f"({time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time() + interval_seconds))})"
-        )
-        time.sleep(interval_seconds)
 
 
 if __name__ == "__main__":
