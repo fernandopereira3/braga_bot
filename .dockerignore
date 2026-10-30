@@ -1,0 +1,7 @@
+.git
+.venv
+.env
+users/
+__pycache__/
+*.pyc
+setup_and_run.ps1

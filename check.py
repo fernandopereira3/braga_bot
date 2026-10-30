@@ -5,7 +5,7 @@ import platform
 
 
 class ConnectivityChecker:
-    def __init__(self, url="http://ead.cecp.sp.gov.br/login/index.php"):
+    def __init__(self, url="https://ead.policiapenal.sp.gov.br/login/index.php"):
         self.url = url
 
     def is_online(self):
