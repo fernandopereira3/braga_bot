@@ -3,6 +3,8 @@ import time
 import subprocess
 import platform
 
+from ssl_ca import CA_BUNDLE
+
 
 class ConnectivityChecker:
     def __init__(self, url="https://ead.policiapenal.sp.gov.br/login/index.php"):
@@ -11,8 +13,11 @@ class ConnectivityChecker:
     def is_online(self):
         """Verifica se o site está online"""
         try:
-            response = requests.get(self.url, timeout=5)
+            response = requests.get(self.url, timeout=5, verify=CA_BUNDLE)
             return response.status_code == 200
+        except requests.exceptions.SSLError as e:
+            print(f"⚠️  erro de SSL: {e}")
+            return False
         except Exception:
             return False
 

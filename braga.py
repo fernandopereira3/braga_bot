@@ -18,6 +18,8 @@ from selenium.common.exceptions import (
     TimeoutException,
 )
 import time
+
+from ssl_ca import CA_BUNDLE
 # from app_course import CourseRunner
 
 load_dotenv()
@@ -50,8 +52,8 @@ def load_users():
 
 
 class BragaBot:
-    LOGIN_URL = "https://ead.cecp.sp.gov.br/login/index.php"
-    COURSE_BASE_URL = "https://ead.cecp.sp.gov.br/course/view.php?id={}"
+    LOGIN_URL = "https://ead.policiapenal.sp.gov.br/login/index.php"
+    COURSE_BASE_URL = "https://ead.policiapenal.sp.gov.br/course/view.php?id={}"
     TIMEOUT = 15
 
     def __init__(self):
@@ -77,7 +79,7 @@ class BragaBot:
     def wait_for_site(self):
         while True:
             try:
-                r = requests.get(self.LOGIN_URL, timeout=5)
+                r = requests.get(self.LOGIN_URL, timeout=5, verify=CA_BUNDLE)
                 if r.status_code == 200:
                     break
             except requests.RequestException:
@@ -163,13 +165,14 @@ class BragaBot:
 
     def _get_session(self):
         session = requests.Session()
+        session.verify = CA_BUNDLE
         for cookie in self.driver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
         return session
 
     def scan_courses(self):
         print("🔍 Buscando cursos matriculados em /my/courses.php...")
-        self.driver.get("https://ead.cecp.sp.gov.br/my/courses.php")
+        self.driver.get("https://ead.policiapenal.sp.gov.br/my/courses.php")
         self.wait.until(
             lambda d: d.execute_script("return document.readyState") == "complete"
         )
@@ -225,7 +228,7 @@ class BragaBot:
         for course_id in course_ids:
             print(f"✏️ Inscrevendo no curso {course_id}...")
             self.driver.get(
-                f"https://ead.cecp.sp.gov.br/enrol/index.php?id={course_id}"
+                f"https://ead.policiapenal.sp.gov.br/enrol/index.php?id={course_id}"
             )
             self.wait.until(
                 lambda d: d.execute_script("return document.readyState") == "complete"

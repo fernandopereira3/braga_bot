@@ -4,20 +4,23 @@ import time
 from dotenv import load_dotenv
 import os
 
+from ssl_ca import CA_BUNDLE
+
 load_dotenv()
 
-LOGIN_URL = "https://ead.cecp.sp.gov.br/login/index.php"
+LOGIN_URL = "https://ead.policiapenal.sp.gov.br/login/index.php"
 USERNAME = os.environ.get("SITE_USERNAME", "")
 PASSWORD = os.environ.get("SITE_PASSWORD", "")
 
 MOD_RE = re.compile(
-    r'(?:https://ead\.cecp\.sp\.gov\.br)?/mod/([^/"]+)/view\.php\?id=(\d+)'
+    r'(?:https://ead\.policiapenal\.sp\.gov\.br)?/mod/([^/"]+)/view\.php\?id=(\d+)'
 )
 YOUTUBE_RE = re.compile(
     r'https?://(?:www\.)?(?:youtube\.com/watch\?[^\s"\'<>]+|youtu\.be/[^\s"\'<>]+)'
 )
 
 session = requests.Session()
+session.verify = CA_BUNDLE
 
 r = session.get(LOGIN_URL, timeout=10)
 token_match = re.search(r'name="logintoken" value="([^"]+)"', r.text)
@@ -41,7 +44,7 @@ if "login" in r.url:
 print("✅ Login OK — escaneando...")
 
 for mid in range(1000, 2001):
-    book_url = f"https://ead.cecp.sp.gov.br/mod/book/view.php?id={mid}"
+    book_url = f"https://ead.policiapenal.sp.gov.br/mod/book/view.php?id={mid}"
     try:
         r = session.get(book_url, timeout=5, allow_redirects=True)
         if "login" in r.url or r.status_code != 200:
@@ -51,7 +54,7 @@ for mid in range(1000, 2001):
 
         mod_urls = list(set(MOD_RE.findall(r.text)))
         for mod_type, mod_id in mod_urls:
-            mod_url = f"https://ead.cecp.sp.gov.br/mod/{mod_type}/view.php?id={mod_id}"
+            mod_url = f"https://ead.policiapenal.sp.gov.br/mod/{mod_type}/view.php?id={mod_id}"
             print(f"    🔗 {mod_type} encontrado: {mod_url}")
             try:
                 rq = session.get(mod_url, timeout=5, allow_redirects=True)

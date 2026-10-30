@@ -11,9 +11,9 @@ from selenium.common.exceptions import (
 import time
 
 MOD_RE = re.compile(
-    r'(?:https://ead\.cecp\.sp\.gov\.br)?/mod/([^/"]+)/view\.php\?id=(\d+)'
+    r'(?:https://ead\.policiapenal\.sp\.gov\.br)?/mod/([^/"]+)/view\.php\?id=(\d+)'
 )
-SITE_BASE = "https://ead.cecp.sp.gov.br"
+SITE_BASE = "https://ead.policiapenal.sp.gov.br"
 NEXT_SELECTOR = "#next-activity-link"
 
 
